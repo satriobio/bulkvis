@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bulkvis"
+version = "3.0"
+authors = [
+    { name = "Satrio Wibowo", email = "satrio.biology@yahoo.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+description = "Bulkvis"
+keywords = []
+dependencies = []
+
+[project.scripts]
+bulkvis = "bulkvis._cli:main"

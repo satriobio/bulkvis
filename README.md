@@ -8,11 +8,18 @@ Feature
 - Load bulkfile from local or public s3 bucket (requirs hpy5 from conda-forge)
 - Load selected signal instead whole, to improve loading time
 - Visualize raw signal and annotations
+- Load pod5 from local
 
 ## Installation
 
 ```
 conda env create -f env.yml
+```
+
+## Quick Start
+
+```
+bulkvis view
 ```
 
 ## Example
