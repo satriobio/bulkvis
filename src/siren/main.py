@@ -26,7 +26,8 @@ import panel.widgets as widgets
 
 pn.extension('plotly')
 
-from modules.bulkvis import Plotting
+from siren.modules import bulkvis, dorado
+from siren.utils.squiggletools import BulkFile
 
 class BulkAnalysisPage:
     def __init__(self, file, channel_id):
@@ -55,28 +56,33 @@ class BulkAnalysisPage:
         self.tabs.append(('Metadata', metadata_content))
     
     def generate_plot(self, event):
-        plot = Plotting()
+        plot = bulkvis.Bulkvis(self.file, self.channel_id)
         plot_content = plot.layout
         self.tabs.append(("Bulkvis", plot_content))
 
     def basecall(self, event):
-        bascall_content = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
-        self.tabs.append((f'Basecall', bascall_content))
+        # bascall_content = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
+        basecaller = dorado.Dorado()
+        basecall_content = basecaller.layout
+        self.tabs.append((f'Basecall', basecall_content))
 
     def find_tail(self, event):
-        plot = Plotting()
-        plot_content = plot.layout
-        self.tabs.append(("Stingray", plot_content))
+        # plot = Bulkvis()
+        # plot_content = plot.layout
+        # self.tabs.append(("Stingray", plot_content))
+        pass
 
     def find_motif(self, event):
-        plot = Plotting()
-        plot_content = plot.layout
-        self.tabs.append(("Motif", plot_content))
+        # plot = Bulkvis()
+        # plot_content = plot.layout
+        # self.tabs.append(("Motif", plot_content))
+        pass
     
     def find_split(self, event):
-        plot = Plotting()
-        plot_content = plot.layout
-        self.tabs.append(("Split", plot_content))
+        # plot = Bulkvis()
+        # plot_content = plot.layout
+        # self.tabs.append(("Split", plot_content))
+        pass
 
     def export_fast5(self, event):
         pass
@@ -332,13 +338,13 @@ class PlotApp:
         read_id = self.channel_ids_select.value
         if read_id:
             analysis_page = BulkAnalysisPage(self.modal_content[1].value, read_id)  # Assuming BulkAnalysisPage is defined elsewhere
-            self.tabs.append((f'Analysis for {read_id}', analysis_page.layout))
+            self.tabs.append((f'Notebook {read_id}', analysis_page.layout))
 
     def add_squiggle_analysis(self, event):
         read_id = self.read_ids_multiselect.value
         if read_id:
             analysis_page = SquiggleAnalysisPage(read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
-            self.tabs.append((f'Analysis for {read_id}', analysis_page.layout))
+            self.tabs.append((f'Notebook {read_id}', analysis_page.layout))
 
     def get_type(self, uri):
         return uri.split('.')[-1]
@@ -349,8 +355,10 @@ class PlotApp:
             self.data_type = self.get_type(self.file_uri)  # Assuming check_type is defined elsewhere
             if self.data_type == 'fast5':
                 self.toggle_select_input('bulk')
-                self.channel_ids_select.options = self.load_read_ids(data_source=True)
+                bulkfile = BulkFile(self.file_uri)
+                self.channel_ids_select.options = bulkfile.list_channels()
                 self.all_channel_ids = self.channel_ids_select.options
+                bulkfile.close()
             else:
                 self.toggle_select_input('non-bulk')
                 self.read_ids_multiselect.options = self.load_read_ids(data_source=True)

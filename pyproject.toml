@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "siren"
+version = "1.0"
+authors = [
+    { name = "Satrio Wibowo", email = "satrio.biology@yahoo.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+description = "Siren"
+keywords = []
+dependencies = []
+
+[project.scripts]
+siren = "siren._cli:main"

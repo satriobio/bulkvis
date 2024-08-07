@@ -30,14 +30,16 @@ class BulkFile:
         self.squiggle = self.file["Raw"][channel]["Signal"][start:end]
         return self.squiggle
     
-    def fetch_annotation(self, key, freq):
+    def fetch_annotation(self, key):
+        freq = 400 
+        #HARDCODED
         channel, start, end = self.parse_position(key)
         states = self.file["StateData"][channel]["States"]
         states = states[:]
         states['acquisition_raw_index'] = states['acquisition_raw_index'] / freq
         states['analysis_raw_index']    = states['analysis_raw_index'] / freq
         states['trigger_time']          = states['trigger_time'] / freq
-        states[(states['acquisition_raw_index'] >= start) & (states['acquisition_raw_index'] <= end)]
+        states = states[(states['acquisition_raw_index'] >= start) & (states['acquisition_raw_index'] <= end)]
         return states
 
     def fetch_context(self):
@@ -56,6 +58,10 @@ class BulkFile:
         channel, region = key.split(":")
         start, end = map(int, region.split("-"))
         return channel, start, end
+    
+    def close(self):
+        self.file.close()
+        self.file = None
 
 class SquiggleFileLegacy:
     def __init__(self, file_squiggle):

@@ -1,41 +1,28 @@
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import panel as pn
-import holoviews as hv
-from holoviews import opts
 import panel.widgets as widgets
+import plotly.graph_objects as go
 
 import h5py
+import pandas as pd
 
-from siren.utils.squiggletools import BulkFile
-
-class Stingray:
+class Template:
     def __init__(self, file_fn, channel_id):
-        self.bulkfile = BulkFile(file_fn)
-        self.channel_id = channel_id
-
-        self.df_squiggle = None
-        self.df_annotation = None
-        self.figure = None
-        self.layout = None
-        self.start_time = 0
-        self.end_time = 200
-        self.color_map = {
-            'pore': 'blue',
-            'strand': 'green',
-            'unblocking': 'purple',
-            # Add more states and colors as needed
-        }
-
-        self.start_time_widget = widgets.IntInput(name='Start Time', start=0, step=1)
-        self.end_time_widget = widgets.IntInput(name='End Time', start=0, step=1)
-        self.annotation_widget = pn.widgets.MultiChoice(name='Annotation', value=[], options=[])
-        self.refresh_button = widgets.Button(name='Refresh Plot')
-        
-        self.refresh_button.on_click(self._update_plot)
-
         try:
+            self.bulkfile = BulkFile(file_fn)
+            self.channel_id = channel_id
+
+            self.df_squiggle = None
+            self.figure = None
+            self.layout = None
+            self.start_time = 0
+            self.end_time = 200
+
+            self.start_time_widget = widgets.IntInput(name='Start Time', start=0, step=1)
+            self.end_time_widget = widgets.IntInput(name='End Time', start=0, step=1)
+            self.refresh_button = widgets.Button(name='Refresh')
+    
+            self.refresh_button.on_click(self._update_plot)
+
             self._load_data()
             self._generate_plot()
             self._setup_layout()
@@ -72,33 +59,6 @@ class Stingray:
             )
         )
 
-        df_active_annotation = self.df_annotation[self.df_annotation['summary_state'].isin(self.annotation_widget.value)]
-        for _, row in df_active_annotation.iterrows():
-            state = row['summary_state']
-            color = self.color_map.get(state, 'grey')
-            x_value = row['acquisition_raw_index']
-            
-            self.figure.add_vline(
-                x=x_value,
-                line=dict(color=color, width=2)
-            )
-
-            rg = filtered_data['Value'].max()-filtered_data['Value'].min()
-
-            self.figure.add_annotation(
-                x=x_value,
-                y= filtered_data['Value'].min() + (rg*0.80),  # Adjust the y position as needed
-                text=state,
-                showarrow=False,
-                font=dict(size=12, color='black'),
-                align='right',
-                textangle=-90
-                # bgcolor='white',
-                # borderpad=4,
-                # bordercolor='black',
-                # borderwidth=1
-            )
-
     def _update_plot(self, event=None):
         self.start_time = self.start_time_widget.value
         self.end_time = self.end_time_widget.value
@@ -111,12 +71,10 @@ class Stingray:
             pn.Spacer(width=20),
             pn.WidgetBox(
                 '''
-                # Bulkvis
-                
+                # Template
                 ''',
                 self.start_time_widget,
                 self.end_time_widget,
-                self.annotation_widget,
                 self.refresh_button
             ),
             pn.pane.Plotly(
