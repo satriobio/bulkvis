@@ -26,12 +26,13 @@ import panel.widgets as widgets
 
 pn.extension('plotly')
 
-from siren.modules import bulkvis, dorado
-from siren.utils.squiggletools import BulkFile
+from siren.modules import bulkvis, dorado, template
+from siren.utils.squiggletools import BulkFile, SquiggleFile
 
 class BulkAnalysisPage:
-    def __init__(self, file, channel_id):
+    def __init__(self, file, file_type, channel_id):
         self.file = file
+        self.file_type = file_type
         self.channel_id = channel_id
         self.toolbar = self.create_toolbar()
         self.tabs = pn.Tabs(tabs_location='left', sizing_mode='stretch_both')
@@ -41,7 +42,7 @@ class BulkAnalysisPage:
     def get_input(self, event):
         input_json = json.dumps({
             "File Name": self.file,
-            "Channel_ID": self.channel_id,
+            "Group ID": self.channel_id,
         }, indent=2)
         
         input_content = pn.pane.JSON(json.loads(input_json), name='Metadata', theme='light')
@@ -56,7 +57,7 @@ class BulkAnalysisPage:
         self.tabs.append(('Metadata', metadata_content))
     
     def generate_plot(self, event):
-        plot = bulkvis.Bulkvis(self.file, self.channel_id)
+        plot = template.Template(self.file, self.file_type, self.channel_id)
         plot_content = plot.layout
         self.tabs.append(("Bulkvis", plot_content))
 
@@ -155,70 +156,12 @@ class BulkAnalysisPage:
 
         return layout
 
-class SquiggleAnalysisPage:
-    def __init__(self, read_id):
-        self.read_id = read_id
-        # self.metadata = 
-        self.toolbar = self.create_toolbar()
-        self.tabs = pn.Tabs(tabs_location='left', sizing_mode='stretch_both')
-        self.tabs.append(('Metadata',self.create_metadata()))
-        self.layout = self.create_layout()
+# class SquiggleAnalysisPage(BulkAnalysisPage):
     
-    def create_metadata(self):
-        # Simulate fetching metadata as a JSON object
-        metadata_json = json.dumps({
-            "Read ID": self.read_id,
-            "Length": 15000,
-            "Quality": "High",
-            "Sample Date": "2023-07-10",
-            "Notes": "Sample data for demonstration purposes."
-        }, indent=2)
-        
-        metadata_section = pn.pane.JSON(json.loads(metadata_json), name='Metadata', theme='light')
-        return metadata_section
-    
-    def create_toolbar(self):
-        # Create toolbar with buttons and icons
-        generate_plot_button = pn.widgets.Button(name='', button_type='primary', icon='chart-line')
-        basecall_button = pn.widgets.Button(name='', button_type='primary', icon='letter-case-upper')
-        export_button = pn.widgets.Button(name='', button_type='primary', icon='download')
-        
-        # Set up event handlers
-        generate_plot_button.on_click(self.generate_plot)
-        basecall_button.on_click(self.bases)
-        
-        toolbar = pn.Column(generate_plot_button, basecall_button, export_button)
-        return toolbar
-
-    def create_plot(self):
-        # Simulate creating a plot based on the read ID
-        x = np.linspace(0, 10, 100)
-        y = np.sin(x) if 'sine' in self.read_id else np.cos(x)
-        df = pd.DataFrame({'x': x, 'y': y})
-        plot = df.hvplot(x='x', y='y', title=f'Plot').opts(axiswise=True)
-        return plot
-
-    def generate_plot(self, event):
-        new_plot = self.create_plot()
-        self.tabs.append((f'Plot', new_plot))
-
-    def bases(self, event):
-        fasta = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
-        self.tabs.append((f'Basecall', fasta))
-
-    def create_layout(self):
-        layout = pn.Column(
-            pn.Row(
-                pn.Spacer(height=20),
-            ),
-            pn.Row(
-                # pn.Spacer(width=30),
-                pn.Column(self.tabs),  # Tab section
-                pn.Column(self.toolbar, width=50,),
-            )
-        )
-
-        return layout
+#     def generate_plot(self, event):
+#         plot = template.SubTemplate(SquiggleFile(self.file), self.channel_id)
+#         plot_content = plot.layout
+#         self.tabs.append(("Bulkvis", plot_content))
 
 class PlotApp:
     def __init__(self):
@@ -337,14 +280,14 @@ class PlotApp:
     def add_bulk_analysis(self, event):
         read_id = self.channel_ids_select.value
         if read_id:
-            analysis_page = BulkAnalysisPage(self.modal_content[1].value, read_id)  # Assuming BulkAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {read_id}', analysis_page.layout))
+            analysis_page = BulkAnalysisPage(self.modal_content[1].value, self.data_type, [read_id])  # Assuming BulkAnalysisPage is defined elsewhere
+            self.tabs.append((f'Notebook {len(read_id)} Item', analysis_page.layout))
 
     def add_squiggle_analysis(self, event):
         read_id = self.read_ids_multiselect.value
         if read_id:
-            analysis_page = SquiggleAnalysisPage(read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {read_id}', analysis_page.layout))
+            analysis_page = BulkAnalysisPage(self.modal_content[1].value,  self.data_type, read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
+            self.tabs.append((f'Notebook {len(read_id)} Item', analysis_page.layout))
 
     def get_type(self, uri):
         return uri.split('.')[-1]
@@ -361,7 +304,12 @@ class PlotApp:
                 bulkfile.close()
             else:
                 self.toggle_select_input('non-bulk')
-                self.read_ids_multiselect.options = self.load_read_ids(data_source=True)
+                # self.read_ids_multiselect.options = self.load_read_ids(data_source=True)
+                squigglefile = SquiggleFile(self.file_uri)
+                self.read_ids_multiselect.options = squigglefile.list_reads()
+                # print(squigglefile.list_reads()[:10])
+                # self.a = self.read_ids_multiselect.options
+                squigglefile.close()
             pn.state.notifications.success('Data loaded successfully.', duration=2000)
         except Exception as e:
             print(f"An error occurred: {e}")

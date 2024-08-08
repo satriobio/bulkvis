@@ -108,7 +108,12 @@ class SquiggleFile:
         return self.squiggle
 
     def list_reads(self):
-        return [read_record.read_id for read_record in self.file.reads()]
+        list_uuid = [read_record.read_id for read_record in self.file.reads()]
+        return [str(u) for u in list_uuid]   
+    
+    def close(self):
+        self.file.close()
+        self.file = None
 
 # def to_fast5(self):
 #     fast5_bytes = BytesIO()
