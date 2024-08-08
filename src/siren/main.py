@@ -1,3 +1,4 @@
+from siren.modules import base, bulkvis
 import panel as pn
 import holoviews as hv
 import hvplot.pandas
@@ -12,7 +13,7 @@ from bokeh.io import curdoc
 from datetime import datetime, time
 
 pn.extension('fontawesome')
-pn.extension(notifications=True)
+# pn.extension(notifications=True)
 
 # plot_opts = dict(responsive=True, min_height=400)
 
@@ -26,7 +27,7 @@ import panel.widgets as widgets
 
 pn.extension('plotly')
 
-from siren.modules import bulkvis, dorado, template
+from siren.modules import dorado
 from siren.utils.squiggletools import BulkFile, SquiggleFile
 
 class BulkAnalysisPage:
@@ -57,15 +58,17 @@ class BulkAnalysisPage:
         self.tabs.append(('Metadata', metadata_content))
     
     def generate_plot(self, event):
-        plot = template.Template(self.file, self.file_type, self.channel_id)
+        # plot = base.Base(self.file, self.file_type, self.channel_id)
+        plot = bulkvis.Bulkvis(self.file, self.file_type, self.channel_id)
         plot_content = plot.layout
         self.tabs.append(("Bulkvis", plot_content))
 
     def basecall(self, event):
         # bascall_content = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
-        basecaller = dorado.Dorado()
-        basecall_content = basecaller.layout
-        self.tabs.append((f'Basecall', basecall_content))
+        # basecaller = base.Base(self.file, self.file_type, self.channel_id)
+        # basecall_content = basecaller.layout
+        # self.tabs.append((f'Basecall', basecall_content))
+        pass
 
     def find_tail(self, event):
         # plot = Bulkvis()
@@ -124,24 +127,6 @@ class BulkAnalysisPage:
         )
         return toolbar
 
-    # def create_plot(self):
-        # Simulate creating a plot based on the read ID
-        # plot = Plotting()
-        # return plot.layout
-        # x = np.linspace(0, 10, 100)
-        # y = np.sin(x) if 'sine' in self.read_id else np.cos(x)
-        # df = pd.DataFrame({'x': x, 'y': y})
-        # plot = df.hvplot(x='x', y='y', title=f'Plot').opts(axiswise=True)
-        # return plot
-
-    # def generate_plot(self, event):
-    #     new_plot = self.create_plot()
-    #     self.tabs.append((f'Plot', new_plot))
-
-    # def bases(self, event):
-    #     fasta = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
-    #     self.tabs.append((f'Basecall', fasta))
-
     def create_layout(self):
         layout = pn.Column(
             pn.Row(
@@ -156,12 +141,12 @@ class BulkAnalysisPage:
 
         return layout
 
-# class SquiggleAnalysisPage(BulkAnalysisPage):
-    
-#     def generate_plot(self, event):
-#         plot = template.SubTemplate(SquiggleFile(self.file), self.channel_id)
-#         plot_content = plot.layout
-#         self.tabs.append(("Bulkvis", plot_content))
+class SquiggleAnalysisPage(BulkAnalysisPage):
+
+    def generate_plot(self, event):
+        plot = base.Base(self.file, self.file_type, self.channel_id)
+        plot_content = plot.layout
+        self.tabs.append(("Squigglevis", plot_content))
 
 class PlotApp:
     def __init__(self):
@@ -230,14 +215,6 @@ class PlotApp:
         """
         return pn.pane.Markdown(about_text)
 
-    def toggle_data_source_input(self, event):
-        if event.new == 'Local':
-            self.modal_content[2].visible = True
-            self.modal_content[3].visible = False
-        else:
-            self.modal_content[2].visible = False
-            self.modal_content[3].visible = True
-
     def toggle_select_input(self, data_type):
         self.msg.visible = False
         if data_type == 'bulk':
@@ -281,13 +258,13 @@ class PlotApp:
         read_id = self.channel_ids_select.value
         if read_id:
             analysis_page = BulkAnalysisPage(self.modal_content[1].value, self.data_type, [read_id])  # Assuming BulkAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {len(read_id)} Item', analysis_page.layout))
+            self.tabs.append((f'Notebook {len([read_id])} Bulk Signal', analysis_page.layout))
 
     def add_squiggle_analysis(self, event):
         read_id = self.read_ids_multiselect.value
         if read_id:
-            analysis_page = BulkAnalysisPage(self.modal_content[1].value,  self.data_type, read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {len(read_id)} Item', analysis_page.layout))
+            analysis_page = SquiggleAnalysisPage(self.modal_content[1].value,  self.data_type, read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
+            self.tabs.append((f'Notebook {len(read_id)} Signal', analysis_page.layout))
 
     def get_type(self, uri):
         return uri.split('.')[-1]
@@ -304,7 +281,6 @@ class PlotApp:
                 bulkfile.close()
             else:
                 self.toggle_select_input('non-bulk')
-                # self.read_ids_multiselect.options = self.load_read_ids(data_source=True)
                 squigglefile = SquiggleFile(self.file_uri)
                 self.read_ids_multiselect.options = squigglefile.list_reads()
                 # print(squigglefile.list_reads()[:10])
