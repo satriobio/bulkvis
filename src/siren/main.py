@@ -1,7 +1,7 @@
 from siren.modules import base, bulkvis
 import panel as pn
-import holoviews as hv
-import hvplot.pandas
+# import holoviews as hv
+# import hvplot.pandas
 import numpy as np
 import pandas as pd
 import json
@@ -12,20 +12,20 @@ from bokeh.layouts import column
 from bokeh.io import curdoc
 from datetime import datetime, time
 
-pn.extension('fontawesome')
-# pn.extension(notifications=True)
+# pn.extension('fontawesome')
+pn.extension(notifications=True)
 
 # plot_opts = dict(responsive=True, min_height=400)
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
 import panel as pn
-import holoviews as hv
-from holoviews import opts
+# import holoviews as hv
+# from holoviews import opts
 import panel.widgets as widgets
 
-pn.extension('plotly')
+# pn.extension('plotly')
 
 from siren.modules import dorado
 from siren.utils.squiggletools import BulkFile, SquiggleFile
@@ -119,11 +119,11 @@ class BulkAnalysisPage:
             btn_file,
             btn_metadata,
             btn_plot, 
-            btn_basecall,
-            btn_tail,
-            btn_motif,
-            btn_split,
-            btn_export
+            # btn_basecall,
+            # btn_tail,
+            # btn_motif,
+            # btn_split,
+            # btn_export
         )
         return toolbar
 
@@ -175,10 +175,10 @@ class PlotApp:
         self.sidebar = pn.Column(
             self.load_squiggle_button,
             self.msg, 
-            self.channel_filter_input, 
+            # self.channel_filter_input, 
             self.channel_ids_select,
             self.btn_bulk_analysis,
-            self.read_filter_input, 
+            # self.read_filter_input, 
             self.read_ids_multiselect, 
             self.btn_squiggle_analysis
         )
@@ -188,7 +188,7 @@ class PlotApp:
         self.tabs = pn.Tabs(closable=True, sizing_mode='stretch_width')
         self.template.main.append(self.tabs)
         self.tabs.append(('Welcome', self.page_welcome()))
-        self.tabs.append(('About', self.page_about()))
+        # self.tabs.append(('About', self.page_about()))
 
         # Set up modal content
         self.modal_content = pn.Column(
@@ -204,31 +204,31 @@ class PlotApp:
     def page_welcome(self):
         welcome_text = """
         ## Welcome to Siren
-        This application allows you to load and analyze squiggle data.
+        Siren Studio: A Modular and Extensible Interface for Nanopore Signal Data Analysis.
         """
         return pn.pane.Markdown(welcome_text)
 
     def page_about(self):
         about_text = """
         ## About Siren
-        Siren is an application designed to help you analyze and visualize squiggle data.
+        Siren Studio: A Modular and Extensible Interface for Nanopore Signal Data Analysis.
         """
         return pn.pane.Markdown(about_text)
 
     def toggle_select_input(self, data_type):
         self.msg.visible = False
         if data_type == 'bulk':
-            self.channel_filter_input.visible = True
+            # self.channel_filter_input.visible = True
             self.channel_ids_select.visible = True
             self.btn_bulk_analysis.visible = True
-            self.read_filter_input.visible = False
+            # self.read_filter_input.visible = False
             self.read_ids_multiselect.visible = False
             self.btn_squiggle_analysis.visible = False
         else:
-            self.channel_filter_input.visible = False
+            # self.channel_filter_input.visible = False
             self.channel_ids_select.visible = False
             self.btn_bulk_analysis.visible = False
-            self.read_filter_input.visible = True
+            # self.read_filter_input.visible = True
             self.read_ids_multiselect.visible = True
             self.btn_squiggle_analysis.visible = True
 
@@ -293,7 +293,7 @@ class PlotApp:
 
     def servable(self):
         return self.template.servable()
-
+    
 # Custom CSS
 raw_css = """
 .bk-header { width: 100px; }
@@ -304,4 +304,22 @@ pn.extension(raw_css=[raw_css])
 
 # Instantiate and serve the app
 app = PlotApp()
-app.servable()
+
+
+app = PlotApp()
+
+__VERSION__ = 0.1
+
+def start_panel():
+    pn.serve(app.template, port=5006, show=False)
+
+# try:
+#     webview.create_window(f'Cuttlefish v{__VERSION__}', 'http://localhost:5006', min_size=(800, 600))
+#     webview.start()
+    
+#     t = threading.Thread(target=start_panel)
+#     t.daemon = True
+#     t.start()
+# except Exception:
+start_panel()  # Serve the panel only if webview fails
+print('The App is still accessible at http://localhost:5006')

@@ -69,6 +69,7 @@ class Base:
         for df_squiggle in self.df_squiggle:
             filtered_data = df_squiggle[(df_squiggle['Time'] >= start) & (df_squiggle['Time'] <= end)]
             filtered_data_list.append(filtered_data)
+            len(filtered_data_list)
         
         for idx, filtered_data in enumerate(filtered_data_list):
             self.p1.line('Time', 'Value', source=filtered_data, color=colors[idx % len(colors)])

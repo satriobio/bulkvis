@@ -15,4 +15,4 @@ keywords = []
 dependencies = []
 
 [project.scripts]
-siren = "siren._cli:main"
+siren = "siren.main:main"
