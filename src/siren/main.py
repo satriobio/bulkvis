@@ -25,275 +25,249 @@ import panel as pn
 # from holoviews import opts
 import panel.widgets as widgets
 
-# pn.extension('plotly')
+pn.extension('plotly')
 
+# from siren.mod import base
+from siren import mod as base
 from siren.modules import dorado
 from siren.utils.squiggletools import BulkFile, SquiggleFile
 
-class BulkAnalysisPage:
-    def __init__(self, file, file_type, channel_id):
-        self.file = file
-        self.file_type = file_type
-        self.channel_id = channel_id
-        self.toolbar = self.create_toolbar()
-        self.tabs = pn.Tabs(tabs_location='left', sizing_mode='stretch_both')
-        self.get_input('')
-        self.layout = self.create_layout()
-    
-    def get_input(self, event):
-        input_json = json.dumps({
-            "File Name": self.file,
-            "Group ID": self.channel_id,
-        }, indent=2)
-        
-        input_content = pn.pane.JSON(json.loads(input_json), name='Metadata', theme='light')
-        self.tabs.append(('Input', input_content))
-    
-    def fetch_metadata(self, event):
-        metadata_json = json.dumps({
-            "Meta Data": "Meta Data",
-        }, indent=2)
-        
-        metadata_content = pn.pane.JSON(json.loads(metadata_json), name='Metadata', theme='light')
-        self.tabs.append(('Metadata', metadata_content))
-    
-    def generate_plot(self, event):
-        # plot = base.Base(self.file, self.file_type, self.channel_id)
-        plot = bulkvis.Bulkvis(self.file, self.file_type, self.channel_id)
-        plot_content = plot.layout
-        self.tabs.append(("Bulkvis", plot_content))
 
-    def basecall(self, event):
-        # bascall_content = pn.pane.Markdown('\>Basecall\nACGTCACGCTCGTCGC')
-        # basecaller = base.Base(self.file, self.file_type, self.channel_id)
-        # basecall_content = basecaller.layout
-        # self.tabs.append((f'Basecall', basecall_content))
-        pass
+class AppMod:
+    pass
 
-    def find_tail(self, event):
-        # plot = Bulkvis()
-        # plot_content = plot.layout
-        # self.tabs.append(("Stingray", plot_content))
-        pass
-
-    def find_motif(self, event):
-        # plot = Bulkvis()
-        # plot_content = plot.layout
-        # self.tabs.append(("Motif", plot_content))
-        pass
-    
-    def find_split(self, event):
-        # plot = Bulkvis()
-        # plot_content = plot.layout
-        # self.tabs.append(("Split", plot_content))
-        pass
-
-    def export_fast5(self, event):
-        pass
-
-    def export_pod5(self, event):
-        pass
-    
-    def create_toolbar(self):
-        # Create toolbar with buttons and icons
-        btn_file        = pn.widgets.Button(name='', button_type='primary', icon='file')
-        btn_metadata    = pn.widgets.Button(name='', button_type='primary', icon='tag')
-        btn_plot        = pn.widgets.Button(name='', button_type='primary', icon='chart-line')
-        btn_basecall    = pn.widgets.Button(name='', button_type='primary', icon='letter-case-upper')
-        btn_tail        = pn.widgets.Button(name='', button_type='primary', icon='ruler-3')
-        btn_motif       = pn.widgets.Button(name='', button_type='primary', icon='fingerprint')
-        btn_split       = pn.widgets.Button(name='', button_type='primary', icon='line-dashed')
-        btn_export      = pn.widgets.Button(name='', button_type='primary', icon='download')
-        
-        # Set up event handlers
-        btn_file.on_click(self.get_input)
-        btn_metadata.on_click(self.fetch_metadata)
-        btn_plot.on_click(self.generate_plot)
-        btn_basecall.on_click(self.basecall)
-        btn_tail.on_click(self.find_tail)
-        btn_motif.on_click(self.find_motif)
-        btn_split.on_click(self.find_split)
-        btn_export.on_click(self.export_pod5)
-        
-        toolbar = pn.Column(
-            btn_file,
-            btn_metadata,
-            btn_plot, 
-            # btn_basecall,
-            # btn_tail,
-            # btn_motif,
-            # btn_split,
-            # btn_export
-        )
-        return toolbar
-
-    def create_layout(self):
-        layout = pn.Column(
-            pn.Row(
-                pn.Spacer(height=20),
-            ),
-            pn.Row(
-                # pn.Spacer(width=30),
-                pn.Column(self.tabs),  # Tab section
-                pn.Column(self.toolbar, width=50),
-            )
-        )
-
-        return layout
-
-class SquiggleAnalysisPage(BulkAnalysisPage):
-
-    def generate_plot(self, event):
-        plot = base.Base(self.file, self.file_type, self.channel_id)
-        plot_content = plot.layout
-        self.tabs.append(("Squigglevis", plot_content))
-
-class PlotApp:
+class FileSet:
     def __init__(self):
-        self.file_uri = None
-        self.all_channel_ids = []
+        self._setup_layout()
+        pass
 
-        # Initialize widgets
-        self.load_squiggle_button = pn.widgets.Button(name='Load Squiggle', button_type='primary', sizing_mode='stretch_width')
-        self.channel_filter_input = pn.widgets.TextInput(name='Filter Channel', placeholder='Enter a string here...', sizing_mode='stretch_width', visible=False)
-        self.channel_ids_select = pn.widgets.Select(name='Channel IDs', options=[], size=10, sizing_mode='stretch_width', visible=False)
-        self.btn_bulk_analysis = pn.widgets.Button(name='Open Notebook', button_type='primary', icon='notebook', visible=False)
+    def _setup_layout(self):
 
-        self.read_filter_input = pn.widgets.TextInput(name='Filter Read ID', placeholder='Enter a string here...', sizing_mode='stretch_width', visible=False)
-        self.read_ids_multiselect = pn.widgets.MultiSelect(name='Read IDs', options=[], size=10, sizing_mode='stretch_width', visible=False)
-        self.btn_squiggle_analysis = pn.widgets.Button(name='Open Notebook', button_type='primary', icon='notebook', visible=False)
+        self.layout = pn.Row(
+            
+        )
 
-        # Set up event watchers
-        self.channel_filter_input.param.watch(self.filter_channel_ids, 'value')
-        self.btn_bulk_analysis.on_click(self.add_bulk_analysis)
-        self.btn_squiggle_analysis.on_click(self.add_squiggle_analysis)
-        self.load_squiggle_button.on_click(self.show_modal)
+class Siren:
+    def __init__(self):
+        self.signal_input = pn.widgets.TextInput(name='Signal data path/S3 URI', placeholder='Path or S3 URI...')
+        self.bulk_input = pn.widgets.TextInput(name='Bulk signal path/S3 URI', placeholder='Path or S3 URI...')
+        self.aln_input = pn.widgets.TextInput(name='Alignment signal path/S3 URI', placeholder='Path or S3 URI...')
+        
+        self.load_dataset_button = pn.widgets.Button(name='Load dataset', button_type='primary', sizing_mode='stretch_width')
+        self.load_dataset_button.on_click(self.load_data)
+        
 
-        self.msg = pn.pane.Markdown("No data available")
+        self.load_example_button = pn.widgets.Button(name='Load example', button_type='default', sizing_mode='stretch_width')
+        # self.load_example_button.on_click(self.load_data)
 
-        # Set up sidebar and main template
+        self.file_signal = None
+        self.file_signal_bulk = None
+
         self.sidebar = pn.Column(
-            self.load_squiggle_button,
-            self.msg, 
-            # self.channel_filter_input, 
-            self.channel_ids_select,
-            self.btn_bulk_analysis,
-            # self.read_filter_input, 
-            self.read_ids_multiselect, 
-            self.btn_squiggle_analysis
-        )
-        self.template = pn.template.MaterialTemplate(title='Siren', sidebar=self.sidebar)
+            pn.pane.Markdown(
+                """
+                # Inputs
+                ## Signal Data
 
-        # Set up tabs
+                Supported formats: POD5, FAST5 (legacy support).
+                """
+            ),
+            self.signal_input,
+
+            pn.pane.Markdown(
+                """
+                ## Bulk Signal Data
+
+                Supported format: FAST5.
+                """
+            ),
+            self.bulk_input,
+
+            pn.pane.Markdown(
+                """
+                ## Alignment Data (Optional)
+
+                Aligned reads in BAM format. Index file located in the same directory. The BAM file should be generated with move tables and MD tags. You can refer to the tutorial below for guidance on how to generate such a BAM file.
+                """
+            ),
+            
+            pn.pane.Markdown(
+                """
+                ```
+                dorado basecaller sup fastq_dir/ | \\
+                minimap2 -ax map-ont -MD ref.mmi - | \\
+                samtools sort | \\
+                samtools view -hb -F256 > output.bam
+                ```
+                """,
+                sizing_mode='stretch_width'
+            ),
+
+            self.aln_input,
+
+            self.load_dataset_button,
+            self.load_example_button
+
+        ),
+
+        self.template = pn.template.BootstrapTemplate(title='Siren', sidebar=self.sidebar)
+        # self.template = pn.template.MaterialTemplate(title='Siren', sidebar=self.sidebar)
         self.tabs = pn.Tabs(closable=True, sizing_mode='stretch_width')
-        self.template.main.append(self.tabs)
         self.tabs.append(('Welcome', self.page_welcome()))
-        # self.tabs.append(('About', self.page_about()))
-
-        # Set up modal content
-        self.modal_content = pn.Column(
-            pn.pane.Markdown("# Select Squiggle"),
-            pn.widgets.TextInput(name='Local path/S3 URI', placeholder='Enter Local path or S3 URI here...', sizing_mode='stretch_width'),
-            pn.widgets.Button(name='Load Data', button_type='primary'),
-            width=400
-        )
-        self.modal_content[1].param.watch(self.set_value, 'value')
-        self.modal_content[-1].on_click(self.load_data)
-        self.template.modal.append(self.modal_content)
+        self.toolbar = self.create_toolbar()
+        self.layout = self.create_layout()
+        self.template.main.append(self.layout)
 
     def page_welcome(self):
         welcome_text = """
         ## Welcome to Siren
         Siren Studio: A Modular and Extensible Interface for Nanopore Signal Data Analysis.
         """
-        return pn.pane.Markdown(welcome_text)
+        return pn.pane.Markdown(welcome_text, sizing_mode='stretch_both')
 
-    def page_about(self):
-        about_text = """
-        ## About Siren
-        Siren Studio: A Modular and Extensible Interface for Nanopore Signal Data Analysis.
-        """
-        return pn.pane.Markdown(about_text)
+    def set_input(self, event):
+        pass
+        setup = FileSet()
+        setup_content = setup.layout
+        self.tabs.append(("Files", setup_content))
 
-    def toggle_select_input(self, data_type):
-        self.msg.visible = False
-        if data_type == 'bulk':
-            # self.channel_filter_input.visible = True
-            self.channel_ids_select.visible = True
-            self.btn_bulk_analysis.visible = True
-            # self.read_filter_input.visible = False
-            self.read_ids_multiselect.visible = False
-            self.btn_squiggle_analysis.visible = False
-        else:
-            # self.channel_filter_input.visible = False
-            self.channel_ids_select.visible = False
-            self.btn_bulk_analysis.visible = False
-            # self.read_filter_input.visible = True
-            self.read_ids_multiselect.visible = True
-            self.btn_squiggle_analysis.visible = True
-
-    def show_modal(self, event):
-        self.template.open_modal()
-
-    def load_read_ids(self, data_source=None):
-        if data_source:
-            return [f'Read {i}' for i in range(1, 11)]  # Simulated read IDs
-        return []
-
-    def filter_channel_ids(self, event):
-        try:
-            filter_text = event.new.lower()
-            if not filter_text:
-                filtered_options = self.all_channel_ids
-            else:
-                filtered_options = [option for option in self.all_channel_ids if filter_text in option.lower()]
-            self.channel_ids_select.options = filtered_options if filtered_options else []
-        except AttributeError as e:
-            print(f"An error occurred: {e}")
-
-    def set_value(self, event):
-        self.file_uri = event.new
-
-    def add_bulk_analysis(self, event):
-        read_id = self.channel_ids_select.value
-        if read_id:
-            analysis_page = BulkAnalysisPage(self.modal_content[1].value, self.data_type, [read_id])  # Assuming BulkAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {len([read_id])} Bulk Signal', analysis_page.layout))
-
-    def add_squiggle_analysis(self, event):
-        read_id = self.read_ids_multiselect.value
-        if read_id:
-            analysis_page = SquiggleAnalysisPage(self.modal_content[1].value,  self.data_type, read_id)  # Assuming SquiggleAnalysisPage is defined elsewhere
-            self.tabs.append((f'Notebook {len(read_id)} Signal', analysis_page.layout))
-
-    def get_type(self, uri):
-        return uri.split('.')[-1]
-
-    def load_data(self, event):
-        self.template.close_modal()
-        try:
-            self.data_type = self.get_type(self.file_uri)  # Assuming check_type is defined elsewhere
-            if self.data_type == 'fast5':
-                self.toggle_select_input('bulk')
-                bulkfile = BulkFile(self.file_uri)
-                self.channel_ids_select.options = bulkfile.list_channels()
-                self.all_channel_ids = self.channel_ids_select.options
-                bulkfile.close()
-            else:
-                self.toggle_select_input('non-bulk')
-                squigglefile = SquiggleFile(self.file_uri)
-                self.read_ids_multiselect.options = squigglefile.list_reads()
-                # print(squigglefile.list_reads()[:10])
-                # self.a = self.read_ids_multiselect.options
-                squigglefile.close()
-            pn.state.notifications.success('Data loaded successfully.', duration=2000)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            pn.state.notifications.warning('Data load failed.', duration=2000)
-
-    def servable(self):
-        return self.template.servable()
+    def generate_plot(self, event):
+        plot = base.Sigvis(self.file_signal)
+        plot_content = plot.layout
+        self.tabs.append(("Sigvis", plot_content))
     
+    def generate_plot_bulk(self, event):
+        plot = base.Bulkvis(self.file_signal_bulk)
+        plot_content = plot.layout
+        self.tabs.append(("Bulkvis", plot_content))
+
+    def generate_plot_anchored(self, event):
+        plot = base.Achovis(self.file_signal)
+        plot_content = plot.layout
+        self.tabs.append(("Achovis Read", plot_content))
+    
+    def generate_plot_anchored_ref(self, event):
+        plot = base.AchovisRef(self.file_signal, self.file_aln)
+        plot_content = plot.layout
+        self.tabs.append(("Achovis Ref", plot_content))
+
+    def generate_segmentation(self, event):
+        plot = base.Segment(self.file_signal)
+        plot_content = plot.layout
+        self.tabs.append(("Segment", plot_content))
+
+    def run_search(self, event):
+        plot = base.Search(self.file_signal)
+        plot_content = plot.layout
+        self.tabs.append(("Search", plot_content))
+
+    def create_toolbar(self):
+        # Create toolbar with buttons and icons
+        btn_file        = pn.widgets.Button(name='', button_type='primary', icon='file', icon_size='2em')
+        btn_metadata    = pn.widgets.Button(name='', button_type='primary', icon='tag', icon_size='2em')
+        btn_plot        = pn.widgets.Button(name='', button_type='primary', icon='wave-sine', icon_size='2em')
+        btn_plot_bulk   = pn.widgets.Button(name='', button_type='primary', icon='tag', icon_size='2em')
+        btn_tail        = pn.widgets.Button(name='', button_type='primary', icon='anchor', icon_size='2em')
+        btn_anchor_read = pn.widgets.Button(name='', button_type='primary', icon='minus', icon_size='2em')
+        btn_anchor_ref  = pn.widgets.Button(name='', button_type='primary', icon='align-justified', icon_size='2em')
+        btn_segment     = pn.widgets.Button(name='', button_type='primary', icon='line-dashed', icon_size='2em')
+        btn_search      = pn.widgets.Button(name='', button_type='primary', icon='database-search', icon_size='2em')
+        btn_basecall    = pn.widgets.Button(name='', button_type='primary', icon='letter-case-upper')
+        btn_motif       = pn.widgets.Button(name='', button_type='primary', icon='fingerprint')
+        btn_split       = pn.widgets.Button(name='', button_type='primary', icon='line-dashed')
+        btn_export      = pn.widgets.Button(name='', button_type='primary', icon='download')
+        
+        # Set up event handlers
+        # btn_file.on_click(self.set_input)
+        # btn_metadata.on_click(self.fetch_metadata)
+        btn_plot.on_click(self.generate_plot)
+        btn_plot_bulk.on_click(self.generate_plot_bulk)
+        # btn_anchor_read.on_click(self.generate_plot_anchored)
+        btn_anchor_ref.on_click(self.generate_plot_anchored_ref)
+        btn_segment.on_click(self.generate_segmentation)
+        btn_search.on_click(self.run_search)
+        # btn_basecall.on_click(self.basecall)
+        # btn_motif.on_click(self.find_motif)
+        # btn_split.on_click(self.find_split)
+        # btn_export.on_click(self.export_pod5)
+        
+        toolbar = pn.Column(
+            pn.Spacer(height=50),
+            # btn_file,
+            # btn_metadata,
+            btn_plot,
+            btn_plot_bulk, 
+            # btn_basecall,
+            # btn_anchor_read,
+            btn_anchor_ref,
+            btn_segment,
+            btn_search,
+            # btn_motif,
+            # btn_split,
+            # btn_export
+        )
+        return toolbar
+    
+    def validate_file(self, format):
+        return True
+    
+    def load_data(self, event):
+        try:
+            if self.signal_input.value:
+                self.file_signal = self.signal_input.value
+                format = self.file_signal.split('.')[-1]
+                if format in ['pod5', 'fast5']:
+                    self.validate_file(format=format)
+                    pn.state.notifications.success('Signal data loaded successfully.', duration=2000)
+                else:
+                    raise ValueError("Invalid format. Please check if the file is 'pod5' or 'fast5'.")
+            
+            if self.bulk_input.value:
+                self.file_signal_bulk = self.bulk_input.value
+                format = self.file_signal_bulk.split('.')[-1]
+                if format in ['fast5']:
+                    self.validate_file(format=format)
+                    pn.state.notifications.success('Bulk data loaded successfully.', duration=2000)
+                else:
+                    raise ValueError("Invalid format. Please check if the file is 'fast5'.")
+            
+            if self.aln_input.value:
+                self.file_aln = self.aln_input.value
+                format = self.file_aln.split('.')[-1]
+                if format in ['bam', 'sam']:
+                    self.validate_file(format=format)
+                    pn.state.notifications.success('Alignment signal loaded successfully.', duration=2000)
+                else:
+                    raise ValueError("Invalid format. Please check if the file is 'bam' or 'sam'.")
+            
+            if (self.file_signal_bulk == None) and (self.file_signal == None):
+                raise ValueError("Signal data not provided. Please provide either signal or bulk signal data.")
+        
+        except Exception as e:
+            # Handle any errors during the loading process
+            pn.state.notifications.error(f"Data load failed: {e}", duration=3000)
+
+    
+    def create_layout(self):
+        layout = pn.Row(
+            pn.Column(self.toolbar, width=80),
+            pn.Column(self.tabs),
+            # pn.Row(
+            #     # pn.Spacer(height=20),
+            #     self.tabs
+            # ),
+            # pn.Row(
+            #     # pn.Spacer(width=30),
+            #     pn.Column(self.toolbar, width=50),
+            #     # pn.Column(self.tabs),  # Tab section
+            # )
+        )
+
+        return layout
+    
+    def servable(self):
+        self.template.servable()
+
 # Custom CSS
 raw_css = """
 .bk-header { width: 100px; }
@@ -303,23 +277,5 @@ raw_css = """
 pn.extension(raw_css=[raw_css])
 
 # Instantiate and serve the app
-app = PlotApp()
-
-
-app = PlotApp()
-
-__VERSION__ = 0.1
-
-def start_panel():
-    pn.serve(app.template, port=5006, show=False)
-
-# try:
-#     webview.create_window(f'Cuttlefish v{__VERSION__}', 'http://localhost:5006', min_size=(800, 600))
-#     webview.start()
-    
-#     t = threading.Thread(target=start_panel)
-#     t.daemon = True
-#     t.start()
-# except Exception:
-start_panel()  # Serve the panel only if webview fails
-print('The App is still accessible at http://localhost:5006')
+app = Siren()
+app.servable()
