@@ -62,6 +62,7 @@ class Siren:
 
         self.file_signal = None
         self.file_signal_bulk = None
+        self.file_aln = None
 
         self.sidebar = pn.Column(
             pn.pane.Markdown(
@@ -93,13 +94,14 @@ class Siren:
             
             pn.pane.Markdown(
                 """
-                ```
-                dorado basecaller sup fastq_dir/ | \\
-                minimap2 -ax map-ont -MD ref.mmi - | \\
-                samtools sort | \\
-                samtools view -hb -F256 > output.bam
+                ```sh
+                dorado basecaller sup pod5/ --emit-moves | \\
+                samtools fastq -T pt,mv,ts - | \\
+                minimap2 -ax map-ont --MD -y ref.mmi - | \\
+                samtools view -hb -F256 | samtools sort - > test.aln.bam
                 ```
                 """,
+                renderer='markdown',
                 sizing_mode='stretch_width'
             ),
 
@@ -130,6 +132,11 @@ class Siren:
         setup = FileSet()
         setup_content = setup.layout
         self.tabs.append(("Files", setup_content))
+
+    def get_metadata(self, event):
+        info = base.Info(self.file_signal, self.file_signal_bulk, self.file_aln)
+        info_content = info.layout
+        self.tabs.append(("File Info", info_content))
 
     def generate_plot(self, event):
         plot = base.Sigvis(self.file_signal)
@@ -164,7 +171,7 @@ class Siren:
     def create_toolbar(self):
         # Create toolbar with buttons and icons
         btn_file        = pn.widgets.Button(name='', button_type='primary', icon='file', icon_size='2em')
-        btn_metadata    = pn.widgets.Button(name='', button_type='primary', icon='tag', icon_size='2em')
+        btn_metadata    = pn.widgets.Button(name='', button_type='primary', icon='info-circle', icon_size='2em')
         btn_plot        = pn.widgets.Button(name='', button_type='primary', icon='wave-sine', icon_size='2em')
         btn_plot_bulk   = pn.widgets.Button(name='', button_type='primary', icon='tag', icon_size='2em')
         btn_tail        = pn.widgets.Button(name='', button_type='primary', icon='anchor', icon_size='2em')
@@ -179,7 +186,7 @@ class Siren:
         
         # Set up event handlers
         # btn_file.on_click(self.set_input)
-        # btn_metadata.on_click(self.fetch_metadata)
+        btn_metadata.on_click(self.get_metadata)
         btn_plot.on_click(self.generate_plot)
         btn_plot_bulk.on_click(self.generate_plot_bulk)
         # btn_anchor_read.on_click(self.generate_plot_anchored)
@@ -194,7 +201,7 @@ class Siren:
         toolbar = pn.Column(
             pn.Spacer(height=50),
             # btn_file,
-            # btn_metadata,
+            btn_metadata,
             btn_plot,
             btn_plot_bulk, 
             # btn_basecall,

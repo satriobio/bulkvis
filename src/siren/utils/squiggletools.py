@@ -36,9 +36,9 @@ class BulkFile:
         channel, start, end = self.parse_position(key)
         states = self.file["StateData"][channel]["States"]
         states = states[:]
-        states['acquisition_raw_index'] = states['acquisition_raw_index'] / freq
-        states['analysis_raw_index']    = states['analysis_raw_index'] / freq
-        states['trigger_time']          = states['trigger_time'] / freq
+        states['acquisition_raw_index'] = states['acquisition_raw_index']
+        states['analysis_raw_index']    = states['analysis_raw_index']
+        states['trigger_time']          = states['trigger_time']
         states = states[(states['acquisition_raw_index'] >= start) & (states['acquisition_raw_index'] <= end)]
         return states
 
