@@ -26,6 +26,8 @@ import json
 import pysam
 import random
 
+from pileupy.main import Pileupy
+
 class Info:
     def __init__(self, file_signal=None, file_signal_bulk=None, file_aln=None):
         self.layout = None
@@ -488,13 +490,28 @@ class AchovisRef(Base):
         start = self.start_time
         end = self.end_time
 
-        self.p1 = figure(toolbar_location=None, x_axis_label="Reference Position", y_axis_label="Normalized Signal", sizing_mode='stretch_width')
-        self.p1.toolbar.logo = None
-        self.p1.toolbar.active_drag = None
-        self.p1.toolbar.active_scroll = None
-        self.p1.toolbar.active_tap = None
+        self.p1 = figure(x_axis_label="Reference Position", y_axis_label="Normalized Signal", sizing_mode='stretch_width')
+
+        # self.p1.toolbar_location=None
+        # self.p1.toolbar.logo = None
+        # self.p1.toolbar.active_drag = None
+        # self.p1.toolbar.active_scroll = None
+        # self.p1.toolbar.active_tap = None
+
         self.p1.ygrid.grid_line_color = None
         self.p1.background_fill_color = "#fafafa"
+
+        self.p2 = figure(min_border_left=50, min_border_right=50, height=80, sizing_mode='stretch_width')
+        # self.p2.toolbar.logo = None
+        # self.p2.toolbar.active_drag = None
+        # self.p2.toolbar.active_scroll = None
+        # self.p2.toolbar.active_tap = None
+
+        # self.p2.toolbar_location=None
+        self.p2.yaxis.major_label_text_color = None
+        self.p2.yaxis.major_tick_line_color = None
+        self.p2.yaxis.minor_tick_line_color = None
+        self.p2.grid.grid_line_color = None
 
         if contig:
             sig_map_refiner = refine_signal_map.SigMapRefiner(
@@ -512,6 +529,16 @@ class AchovisRef(Base):
                     "Reference Position": np.concatenate([read.ref_sig_coords for read in s_reads]),
                     "Signal": np.concatenate([read.norm_signal for read in s_reads]),
                     "Read": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
+                }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
+            ])
+
+            df_test = pd.concat([
+                pd.DataFrame({
+                    "chrom": 'ENST00000610460.1|ENSG00000277739.1|-|-|5_8S_rRNA.5-201|5_8S_rRNA|153|rRNA|',
+                    "start": np.concatenate([read.ref_sig_coords for read in s_reads]),
+                    "end": np.concatenate([read.ref_sig_coords for read in s_reads]) + 1,
+                    "value": np.concatenate([read.norm_signal for read in s_reads]),
+                    "read_names": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
                 }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
             ])
 
@@ -537,8 +564,23 @@ class AchovisRef(Base):
 
             if self.input_levels.value:
                 self.p1.segment(x0='base_st', x1='base_en', y0='level', y1='level', source=df_level, line_width=2, color='orange', legend_label="Levels")
-        
-        self.figure = pn.Column(self.p1)
+
+            # if filtered_data_list:
+            for sample_name, sample_df in df_signal.groupby('Read'):
+                self.p2.line('Time', 'Value', source=sample_df, color="red")
+
+            self.rslider = RangeSlider(margin=50, start=start, end=end, value=(start, end), title=None, show_value=False, 
+                                    sizing_mode='stretch_width')
+            self.rslider.js_link('value', self.p1.x_range, 'start', attr_selector=0)
+            self.rslider.js_link('value', self.p1.x_range, 'end', attr_selector=1)
+
+        # self.figure = pn.Column(self.p1, self.p2, self.rslider, sizing_mode='stretch_width')
+
+            browser = Pileupy('ENST00000610460.1|ENSG00000277739.1|-|-|5_8S_rRNA.5-201|5_8S_rRNA|153|rRNA|:20-120', reference='/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/data/reference/gencode.v45.transcripts.fa')
+            browser.add_track_alignment('/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/phd-miten/test.aln.bam', height=200)
+            browser.add_track_df(df_test, height=200)
+            self.figure = pn.Column(*[track.figure for track in browser.tracks])
+        # self.figure = pn.Column(self.p1)
 
     def _setup_layout(self):
         self.layout = pn.Row(

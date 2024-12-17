@@ -32,7 +32,6 @@ from siren import mod as base
 from siren.modules import dorado
 from siren.utils.squiggletools import BulkFile, SquiggleFile
 
-
 class AppMod:
     pass
 
