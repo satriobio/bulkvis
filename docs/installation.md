@@ -3,24 +3,10 @@
 ## Source
 
 ```
-git clone https://github.com/satriobio/bulkvis.git 
+git clone https://github.com/satriobio/bulkvis.git
+cd bulkvis
 pip -e .
 ```
-
-## PIP
-
-Install pileupy using the following command.
-
-```
-pip install pileupy
-```
-
-## Conda
-
-```
-conda install pileupy
-```
-
 
 ## Docker
 

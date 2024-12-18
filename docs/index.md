@@ -19,7 +19,8 @@ Open the app [http://localhost:5006/](http://localhost:5006/)
 ## Installation
 
 ```
-git clone https://github.com/satriobio/bulkvis.git 
+git clone https://github.com/satriobio/bulkvis.git
+cd bulkvis
 pip -e .
 ```
 
