@@ -1,0 +1,9 @@
+site_name: Siren
+site_url: https://looselab.github.io/siren
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Advanced Usage: advance.md

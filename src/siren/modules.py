@@ -1,32 +1,32 @@
+# Standard Library
+import json
+import random
+from itertools import chain
+
+# Third-Party Libraries
+import h5py
+import numpy as np
+import pandas as pd
+import pysam
+import ruptures as rpt
+
+# Bokeh Libraries
+from bokeh.models import ColumnDataSource, Label, RangeSlider, Text
+from bokeh.palettes import Category10
+from bokeh.plotting import figure, show
+from bokeh.resources import INLINE
+
+# Panel Libraries
 import panel as pn
 import panel.widgets as widgets
 
-from bokeh.plotting import figure
-from bokeh.models import RangeSlider
-from bokeh.palettes import Category10 
-import plotly.graph_objects as go
-
-import h5py
-import pandas as pd
-
-from siren.utils.squiggletools import BulkFile, SquiggleFile
-from bokeh.resources import INLINE
-import ruptures as rpt
-
-from remora import io, refine_signal_map
-from itertools import chain
-
-import numpy as np
-from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource, Text, Label
-
-import pod5
-import json
-
-import pysam
-import random
-
+# External Libraries
 from pileupy.main import Pileupy
+from remora import io, refine_signal_map
+from siren.utils.squiggletools import BulkFile, SquiggleFile
+
+# Pod5
+import pod5
 
 class Info:
     def __init__(self, file_signal=None, file_signal_bulk=None, file_aln=None):
@@ -133,7 +133,7 @@ class Base:
         self.input_start_time = widgets.IntInput(name='Start Time', start=0, step=1)
         self.input_end_time = widgets.IntInput(name='End Time', start=0, step=1)
         self.input_norm = widgets.Select(name='Normalization', options=['None', 'Z-Score', 'MAD'])
-        self.input_seg = widgets.Select(name='Segmentation', options=['None', 'Ruptures', 'Model'])
+        self.input_seg = widgets.Select(name='Segmentation', options=['None', 'Ruptures'])
         self.button_plot = widgets.Button(name='Plot', button_type='primary', sizing_mode='stretch_width')
         self.button_export = widgets.Button(name='Export Report', button_type='success', sizing_mode='stretch_width')
         
@@ -230,8 +230,8 @@ class Base:
 
         if self.df_segmentation:
             for breakpoint in self.df_segmentation:
-                # self.p1.vspan(x=breakpoint, line_color='gray', line_width=2)
-                self.p1.vspan(x=row['acquisition_raw_index'], line_dash = 'dashed', line_color='red', line_width=2)
+                self.p1.vspan(x=breakpoint, line_dash = 'dashed', line_color='red', line_width=2)
+                # self.p1.vspan(x=row['acquisition_raw_index'], line_dash = 'dashed', line_color='red', line_width=2)
 
         self.p1.ygrid.grid_line_color = None
         self.p1.background_fill_color = "#fafafa"
@@ -453,12 +453,15 @@ class AchovisRef(Base):
     def __init__(self, file_signal, file_aln):
         super().__init__(file_signal)
 
+        self.file_aln = file_aln
+
         # Data
         self.BASE_COLORS = {"A": "#00CC00", "C": "#0000CC", "G": "#FFB300", "T": "#CC0000", "U": "#CC0000", "N": "#FFFFFF"}
         self.file_kmer_levels = file_kmer_levels = "/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/phd-miten/9mer_levels_v1.txt"
 
         # Widgets
-        self.input_reference = widgets.TextInput(name="Reference Name")
+        self.input_reference_file = widgets.TextInput(name="Reference Path")
+        self.input_reference = widgets.TextInput(name="Contig Name")
         self.input_levels = pn.widgets.Checkbox(name='Levels')
         self.input_basecall_seq = pn.widgets.Checkbox(name='Basecall Sequence')
         # self.input_stack = pn.widgets.Checkbox(name='Stack signal')
@@ -486,6 +489,7 @@ class AchovisRef(Base):
         pass
 
     def _generate_plot(self):
+        ref = self.input_reference_file.value
         contig = self.input_reference.value
         start = self.start_time
         end = self.end_time
@@ -534,7 +538,7 @@ class AchovisRef(Base):
 
             df_test = pd.concat([
                 pd.DataFrame({
-                    "chrom": 'ENST00000610460.1|ENSG00000277739.1|-|-|5_8S_rRNA.5-201|5_8S_rRNA|153|rRNA|',
+                    "chrom": contig,
                     "start": np.concatenate([read.ref_sig_coords for read in s_reads]),
                     "end": np.concatenate([read.ref_sig_coords for read in s_reads]) + 1,
                     "value": np.concatenate([read.norm_signal for read in s_reads]),
@@ -576,8 +580,8 @@ class AchovisRef(Base):
 
         # self.figure = pn.Column(self.p1, self.p2, self.rslider, sizing_mode='stretch_width')
 
-            browser = Pileupy('ENST00000610460.1|ENSG00000277739.1|-|-|5_8S_rRNA.5-201|5_8S_rRNA|153|rRNA|:20-120', reference='/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/data/reference/gencode.v45.transcripts.fa')
-            browser.add_track_alignment('/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/phd-miten/test.aln.bam', height=200)
+            browser = Pileupy(f'{contig}:{start}-{end}', reference=ref)
+            browser.add_track_alignment(self.file_aln, height=200)
             browser.add_track_df(df_test, height=200)
             self.figure = pn.Column(*[track.figure for track in browser.tracks])
         # self.figure = pn.Column(self.p1)
@@ -589,11 +593,12 @@ class AchovisRef(Base):
                     '''
                     # Anchored to Reference Visualization
                     ''',
+                    self.input_reference_file,
                     self.input_reference,
                     self.input_start_time,
                     self.input_end_time,
-                    self.input_levels,
-                    self.input_basecall_seq,
+                    # self.input_levels,
+                    # self.input_basecall_seq,
                     self.button_plot,
                     self.button_export,
                     width=330

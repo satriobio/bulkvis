@@ -1,6 +1,8 @@
-# Siren Studio: A modular interface for nanopore raw data analysis
+![logo](img/icon.png)
 
-A modular interface for nanopore raw data analysis
+# Siren
+
+A modular interface for nanopore raw data analysis. 
 
 ## Quick start
 
@@ -11,6 +13,8 @@ siren
 ```
 
 Open the app [http://localhost:5006/](http://localhost:5006/)
+
+![img/icon.png](img/siren.png)
 
 ## Installation
 

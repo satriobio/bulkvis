@@ -1,39 +1,7 @@
-from siren.modules import base, bulkvis
 import panel as pn
-# import holoviews as hv
-# import hvplot.pandas
-import numpy as np
-import pandas as pd
-import json
+from siren import modules as base
 
-from bokeh.plotting import figure, show
-from bokeh.models import DateRangeSlider, Spacer, ColumnDataSource, RangeSlider
-from bokeh.layouts import column
-from bokeh.io import curdoc
-from datetime import datetime, time
-
-# pn.extension('fontawesome')
 pn.extension(notifications=True)
-
-# plot_opts = dict(responsive=True, min_height=400)
-
-import numpy as np
-import pandas as pd
-# import plotly.graph_objects as go
-import panel as pn
-# import holoviews as hv
-# from holoviews import opts
-import panel.widgets as widgets
-
-pn.extension('plotly')
-
-# from siren.mod import base
-from siren import mod as base
-from siren.modules import dorado
-from siren.utils.squiggletools import BulkFile, SquiggleFile
-
-class AppMod:
-    pass
 
 class FileSet:
     def __init__(self):
@@ -107,7 +75,7 @@ class Siren:
             self.aln_input,
 
             self.load_dataset_button,
-            self.load_example_button
+            # self.load_example_button
 
         ),
 
@@ -206,8 +174,8 @@ class Siren:
             # btn_basecall,
             # btn_anchor_read,
             btn_anchor_ref,
-            btn_segment,
-            btn_search,
+            # btn_segment,
+            # btn_search,
             # btn_motif,
             # btn_split,
             # btn_export
@@ -283,5 +251,8 @@ raw_css = """
 pn.extension(raw_css=[raw_css])
 
 # Instantiate and serve the app
-app = Siren()
-app.servable()
+# def main():
+def main():
+    app = Siren()
+    app.servable()
+    pn.serve(app.template, port=5006, show=True)
