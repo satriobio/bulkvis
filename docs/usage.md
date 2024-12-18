@@ -48,9 +48,9 @@ Enter channel ID, start, and end time to visualize bulk raw signal. Select avail
 The BAM file should be generated with move tables and MD tags. You can refer to the tutorial below for guidance on how to generate such a BAM file.
 
 ```
-dorado basecaller sup pod5/ --emit-moves | \\
-samtools fastq -T pt,mv,ts - | \\
-minimap2 -ax map-ont --MD -y ref.mmi - | \\
+dorado basecaller sup pod5/ --emit-moves | \
+samtools fastq -T pt,mv,ts - | \
+minimap2 -ax map-ont --MD -y ref.mmi - | \
 samtools view -hb -F256 | samtools sort - > test.aln.bam
 ```
 
