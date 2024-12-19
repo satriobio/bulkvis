@@ -462,7 +462,7 @@ class AnchovisRef(Base):
         self.BASE_COLORS = {"A": "#00CC00", "C": "#0000CC", "G": "#FFB300", "T": "#CC0000", "U": "#CC0000", "N": "#FFFFFF"}
         
         # Use pkg_resources to get the path to the static file
-        self.file_kmer_levels = str(resources.files('siren') / 'static' / 'rna004' / '9mer_levels_v1.txt')
+        # self.file_kmer_levels = str(resources.files('siren') / 'static' / 'rna004' / '9mer_levels_v1.txt')
 
         # Widgets
         self.input_reference_file = widgets.TextInput(name="Reference Path")
@@ -498,6 +498,7 @@ class AnchovisRef(Base):
     def _generate_plot(self):
         ref = self.input_reference_file.value
         contig = self.input_reference.value
+        kmer_model = self.input_kmer_model.value
         start = self.start_time
         end = self.end_time
 
@@ -525,74 +526,76 @@ class AnchovisRef(Base):
         self.p2.grid.grid_line_color = None
 
         if contig:
-            kmer_model = resources.files('siren') / 'static' / self.input_kmer_model.value / '9mer_levels_v1.txt'
-            sig_map_refiner = refine_signal_map.SigMapRefiner(
-                kmer_model_filename=str(kmer_model), do_rough_rescale=True, scale_iters=0, do_fix_guage=True
-            )
+            if kmer_model:
+                print('here')
+                kmer_model = resources.files('siren') / 'static' / kmer_model / '9mer_levels_v1.txt'
+                sig_map_refiner = refine_signal_map.SigMapRefiner(
+                    kmer_model_filename=str(kmer_model), do_rough_rescale=True, scale_iters=0, do_fix_guage=True
+                )
 
-            ref_reg = io.RefRegion(ctg=contig, strand="+", start=start, end=end)
-            ref_seq = io.get_ref_seq_from_reads(ref_reg, io.get_reg_bam_reads(ref_reg, self.reader_aln))
+                ref_reg = io.RefRegion(ctg=contig, strand="+", start=start, end=end)
+                ref_seq = io.get_ref_seq_from_reads(ref_reg, io.get_reg_bam_reads(ref_reg, self.reader_aln))
 
-            samples_read_ref_regs, reg_bam_reads = io.get_reads_reference_regions(ref_reg, [(self.reader_signal, self.reader_aln)], sig_map_refiner=sig_map_refiner)
-            seq, levels = io.get_ref_seq_and_levels_from_reads(ref_reg, chain(*reg_bam_reads), sig_map_refiner)
+                samples_read_ref_regs, reg_bam_reads = io.get_reads_reference_regions(ref_reg, [(self.reader_signal, self.reader_aln)], sig_map_refiner=sig_map_refiner)
+                seq, levels = io.get_ref_seq_and_levels_from_reads(ref_reg, chain(*reg_bam_reads), sig_map_refiner)
 
-            df_signal = pd.concat([
-                pd.DataFrame({
-                    "Reference Position": np.concatenate([read.ref_sig_coords for read in s_reads]),
-                    "Signal": np.concatenate([read.norm_signal for read in s_reads]),
-                    "Read": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
-                }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
-            ])
+                df_signal = pd.concat([
+                    pd.DataFrame({
+                        "Reference Position": np.concatenate([read.ref_sig_coords for read in s_reads]),
+                        "Signal": np.concatenate([read.norm_signal for read in s_reads]),
+                        "Read": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
+                    }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
+                ])
 
-            df_test = pd.concat([
-                pd.DataFrame({
-                    "chrom": contig,
-                    "start": np.concatenate([read.ref_sig_coords for read in s_reads]),
-                    "end": np.concatenate([read.ref_sig_coords for read in s_reads]) + 1,
-                    "value": np.concatenate([read.norm_signal for read in s_reads]),
-                    "read_names": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
-                }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
-            ])
+                df_test = pd.concat([
+                    pd.DataFrame({
+                        "chrom": contig,
+                        "start": np.concatenate([read.ref_sig_coords for read in s_reads]),
+                        "end": np.concatenate([read.ref_sig_coords for read in s_reads]) + 1,
+                        "value": np.concatenate([read.norm_signal for read in s_reads]),
+                        "read_names": [f"{sample_name}_{read_idx}" for read_idx, read in enumerate(s_reads) for _ in range(read.norm_signal.size)],
+                    }) for sample_name, s_reads in zip(["Control"], samples_read_ref_regs)
+                ])
 
-            df_level = pd.DataFrame({
-                "base_st": np.arange(ref_reg.start, ref_reg.end),
-                "base_en": np.arange(ref_reg.start + 1, ref_reg.end + 1),
-                "level": levels
-            })
+                df_level = pd.DataFrame({
+                    "base_st": np.arange(ref_reg.start, ref_reg.end),
+                    "base_en": np.arange(ref_reg.start + 1, ref_reg.end + 1),
+                    "level": levels
+                })
 
-            offset = df_signal['Signal'].min() - (0.1 *(df_signal['Signal'].max() - df_signal['Signal'].min()))
-            df_base = pd.DataFrame({
-                "x": np.arange(ref_reg.start, ref_reg.end),
-                "y": offset,  # Position the text at the bottom
-                "base": [base for base in seq],
-                "text_color": [self.BASE_COLORS[b] for b in seq]
-            })
+                offset = df_signal['Signal'].min() - (0.1 *(df_signal['Signal'].max() - df_signal['Signal'].min()))
+                df_base = pd.DataFrame({
+                    "x": np.arange(ref_reg.start, ref_reg.end),
+                    "y": offset,  # Position the text at the bottom
+                    "base": [base for base in seq],
+                    "text_color": [self.BASE_COLORS[b] for b in seq]
+                })
 
-            for sample_name, sample_df in df_signal.groupby('Read'):
-                self.p1.line(x='Reference Position', y='Signal', source=sample_df, line_width=1, alpha=0.1, color="red")
+                for sample_name, sample_df in df_signal.groupby('Read'):
+                    self.p1.line(x='Reference Position', y='Signal', source=sample_df, line_width=1, alpha=0.1, color="red")
 
-            if self.input_basecall_seq.value:
-                self.p1.add_glyph(ColumnDataSource(df_base), Text(x="x", y="y", text="base", text_color="text_color", text_font_size="12pt"))
+                if self.input_basecall_seq.value:
+                    self.p1.add_glyph(ColumnDataSource(df_base), Text(x="x", y="y", text="base", text_color="text_color", text_font_size="12pt"))
 
-            if self.input_levels.value:
-                self.p1.segment(x0='base_st', x1='base_en', y0='level', y1='level', source=df_level, line_width=2, color='orange', legend_label="Levels")
+                if self.input_levels.value:
+                    self.p1.segment(x0='base_st', x1='base_en', y0='level', y1='level', source=df_level, line_width=2, color='orange', legend_label="Levels")
 
-            # if filtered_data_list:
-            for sample_name, sample_df in df_signal.groupby('Read'):
-                self.p2.line('Time', 'Value', source=sample_df, color="red")
+                # if filtered_data_list:
+                for sample_name, sample_df in df_signal.groupby('Read'):
+                    self.p2.line('Time', 'Value', source=sample_df, color="red")
 
-            self.rslider = RangeSlider(margin=50, start=start, end=end, value=(start, end), title=None, show_value=False, 
-                                    sizing_mode='stretch_width')
-            self.rslider.js_link('value', self.p1.x_range, 'start', attr_selector=0)
-            self.rslider.js_link('value', self.p1.x_range, 'end', attr_selector=1)
+                self.rslider = RangeSlider(margin=50, start=start, end=end, value=(start, end), title=None, show_value=False, 
+                                        sizing_mode='stretch_width')
+                self.rslider.js_link('value', self.p1.x_range, 'start', attr_selector=0)
+                self.rslider.js_link('value', self.p1.x_range, 'end', attr_selector=1)
 
-        # self.figure = pn.Column(self.p1, self.p2, self.rslider, sizing_mode='stretch_width')
+            # self.figure = pn.Column(self.p1, self.p2, self.rslider, sizing_mode='stretch_width')
 
-            browser = Pileupy(f'{contig}:{start}-{end}', reference=ref)
-            browser.add_track_alignment(self.file_aln, height=200)
-            browser.add_track_df(df_test, height=200)
-            self.figure = pn.Column(*[track.figure for track in browser.tracks])
-        # self.figure = pn.Column(self.p1)
+                browser = Pileupy(f'{contig}:{start}-{end}', reference=ref)
+                browser.add_track_alignment(self.file_aln, height=200)
+                browser.add_track_df(df_test, height=200)
+                self.figure = pn.Column(*[track.figure for track in browser.tracks])
+            # self.figure = pn.Column(self.p1)
 
     def _setup_layout(self):
         self.layout = pn.Row(

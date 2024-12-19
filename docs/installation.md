@@ -6,7 +6,7 @@
 git clone https://github.com/satriobio/bulkvis.git
 cd bulkvis
 git checkout siren
-conda env create -f environment.yml
+conda env create -f env.yaml
 ```
 
 ## Docker
