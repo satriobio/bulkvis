@@ -16,3 +16,11 @@ dependencies = []
 
 [project.scripts]
 siren = "siren.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/siren"]
+
+[tool.hatch.build]
+include = [
+    "static/*",
+]

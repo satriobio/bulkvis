@@ -89,10 +89,71 @@ class Siren:
 
     def page_welcome(self):
         welcome_text = """
-        ## Welcome to Siren
+        # Welcome to Siren !
+
         Siren Studio: A Modular and Extensible Interface for Nanopore Signal Data Analysis.
+
+        ## Getting started
+
+        Start app
+
+        ```
+        siren
+        ```
+
+        Open the app [http://localhost:5006/](http://localhost:5006/)
+
+        The app has 3 parts: input pane, tool box, and tool page.
+
+        <img src="https://satriobio.github.io/bulkvis/img/page.png" alt="Page Overview" width="500">
+
+        ### Input pane
+
+        Specify input in the input pane, use either raw signal file (POD5) or bulk signal file (FAST5). Provide input before selecting the tool available.
+
+        ### Toolbox
+
+        Currently Siren has 4 tools available. Click the tool icon in the toolbox to open the tool page.
+
+        - `Signal visualization`
+        - `Bulk visualization`
+        - `Signal mapping`
+
+        <img src="https://satriobio.github.io/bulkvis/img/buttons.png" alt="Toolbox Buttons" width="300">
+
+        ## Signal visualization
+
+        Enter read ID, start, and end time to visualize raw signal. Apply normalization or breakpoint calculation if needed.
+
+        <img src="https://satriobio.github.io/bulkvis/img/sigvis.png" alt="Signal Visualization" width="500">
+
+        ## Bulk signal visualization
+
+        Enter channel ID, start, and end time to visualize bulk raw signal. Select available annotation if needed.
+
+        <img src="https://satriobio.github.io/bulkvis/img/bulkvis.png" alt="Bulk Visualization" width="500">
+
+        ## Signal mapping
+
+        ### Preparing input
+
+        The BAM file should be generated with move tables and MD tags. You can refer to the tutorial below for guidance on how to generate such a BAM file.
+
+        ```
+        dorado basecaller sup pod5/ --emit-moves | \\
+        samtools fastq -T pt,mv,ts - | \\
+        minimap2 -ax map-ont --MD -y ref.mmi - | \\
+        samtools view -hb -F256 | samtools sort - > test.aln.bam
+        ```
+
+        Enter refence file path, contig name, start, and end time to visualize signal mapping to reference.
+
+        <img src="https://satriobio.github.io/bulkvis/img/anchovis.png" alt="Signal Mapping" width="500">
+
+        ## Reference
+        - [Bulkvis docs](https://satriobio.github.io/bulkvis/)
         """
-        return pn.pane.Markdown(welcome_text, sizing_mode='stretch_both')
+        return pn.pane.Markdown(welcome_text, sizing_mode='stretch_width')
 
     def set_input(self, event):
         pass
@@ -116,14 +177,14 @@ class Siren:
         self.tabs.append(("Bulkvis", plot_content))
 
     def generate_plot_anchored(self, event):
-        plot = base.Achovis(self.file_signal)
+        plot = base.Anchovis(self.file_signal)
         plot_content = plot.layout
-        self.tabs.append(("Achovis Read", plot_content))
+        self.tabs.append(("Anchovis Read", plot_content))
     
     def generate_plot_anchored_ref(self, event):
-        plot = base.AchovisRef(self.file_signal, self.file_aln)
+        plot = base.AnchovisRef(self.file_signal, self.file_aln)
         plot_content = plot.layout
-        self.tabs.append(("Achovis Ref", plot_content))
+        self.tabs.append(("Anchovis Ref", plot_content))
 
     def generate_segmentation(self, event):
         plot = base.Segment(self.file_signal)

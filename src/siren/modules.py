@@ -28,6 +28,9 @@ from siren.utils.squiggletools import BulkFile, SquiggleFile
 # Pod5
 import pod5
 
+from importlib import resources
+import os
+
 class Info:
     def __init__(self, file_signal=None, file_signal_bulk=None, file_aln=None):
         self.layout = None
@@ -449,7 +452,7 @@ class Bulkvis(Base):
             margin=(20, 20, 20, 20)  
         )
 
-class AchovisRef(Base):
+class AnchovisRef(Base):
     def __init__(self, file_signal, file_aln):
         super().__init__(file_signal)
 
@@ -457,11 +460,15 @@ class AchovisRef(Base):
 
         # Data
         self.BASE_COLORS = {"A": "#00CC00", "C": "#0000CC", "G": "#FFB300", "T": "#CC0000", "U": "#CC0000", "N": "#FFFFFF"}
-        self.file_kmer_levels = file_kmer_levels = "/mnt/869990e7-a61f-469f-99fe-a48d24ac44ca/git/phd-miten/9mer_levels_v1.txt"
+        
+        # Use pkg_resources to get the path to the static file
+        self.file_kmer_levels = str(resources.files('siren') / 'static' / 'rna004' / '9mer_levels_v1.txt')
 
         # Widgets
         self.input_reference_file = widgets.TextInput(name="Reference Path")
         self.input_reference = widgets.TextInput(name="Contig Name")
+        self.input_kmer_model = widgets.Select(name='Kmer Model', options=['rna004', 'dna_r10.4.1_e8.2_400bps'])
+
         self.input_levels = pn.widgets.Checkbox(name='Levels')
         self.input_basecall_seq = pn.widgets.Checkbox(name='Basecall Sequence')
         # self.input_stack = pn.widgets.Checkbox(name='Stack signal')
@@ -476,7 +483,7 @@ class AchovisRef(Base):
             self.layout = pn.Row(
                 pn.Column(
                     """
-                    ## Achovis
+                    ## Anchovis
                     Error loading input.
                     """
                 ),
@@ -518,8 +525,9 @@ class AchovisRef(Base):
         self.p2.grid.grid_line_color = None
 
         if contig:
+            kmer_model = resources.files('siren') / 'static' / self.input_kmer_model.value / '9mer_levels_v1.txt'
             sig_map_refiner = refine_signal_map.SigMapRefiner(
-                kmer_model_filename=self.file_kmer_levels, do_rough_rescale=True, scale_iters=0, do_fix_guage=True
+                kmer_model_filename=str(kmer_model), do_rough_rescale=True, scale_iters=0, do_fix_guage=True
             )
 
             ref_reg = io.RefRegion(ctg=contig, strand="+", start=start, end=end)
@@ -597,6 +605,7 @@ class AchovisRef(Base):
                     self.input_reference,
                     self.input_start_time,
                     self.input_end_time,
+                    self.input_kmer_model,
                     # self.input_levels,
                     # self.input_basecall_seq,
                     self.button_plot,
